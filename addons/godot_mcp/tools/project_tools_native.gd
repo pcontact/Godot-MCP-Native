@@ -100,7 +100,8 @@ func _tool_get_project_info(params: Dictionary) -> Dictionary:
 	var main_scene: String = main_scene_uid
 	if main_scene_uid.begins_with("uid://"):
 		if ClassDB.class_exists("ResourceUID"):
-			main_scene = ResourceUID.uid_to_path(main_scene_uid)
+			main_scene = ResourceUID.get_id_path(ResourceUID.text_to_id(main_scene_uid))
+			#smain_scene = ResourceUID.uid_to_path(main_scene_uid)
 	
 	var project_path: String = ProjectSettings.globalize_path("res://")
 	var godot_version: Dictionary = Engine.get_version_info()
@@ -1832,7 +1833,30 @@ func _register_get_resource_uid_info(server_core: RefCounted) -> void:
 						  Callable(self, "_tool_get_resource_uid_info"),
 						  output_schema, annotations,
 						  "supplementary", "Project-Advanced")
+func uid_to_path(uid_string: String) -> String:
+	if uid_string.is_empty():
+		return ""
+	# Optional: Add basic UID format validation if needed
+	# if not uid_string.begins_with("uid://"):
+	#     return uid_string  # Return as-is if it's not a UID
 
+	return ResourceUID.get_id_path(ResourceUID.text_to_id(uid_string))
+
+## Converts a resource path (e.g., "res://scene.tscn") to its UID string (e.g., "uid://abc123").
+## Returns an empty string if the path has no associated UID or if the path is invalid.
+func path_to_uid(resource_path: String) -> String:
+	if resource_path.is_empty():
+		push_warning("path_to_uid called with empty resource path")
+		return ""
+	
+	var uid_int: int = ResourceLoader.get_resource_uid(resource_path)
+	if uid_int != -1:
+		return ResourceUID.id_to_text(uid_int)
+	
+	# No UID found – this can happen for built‑in resources or paths that don't exist
+	push_warning("No UID found for resource: ", resource_path)
+	return ""
+		
 func _tool_get_resource_uid_info(params: Dictionary) -> Dictionary:
 	var resource_path: String = str(params.get("resource_path", "")).strip_edges()
 	var uid_text: String = str(params.get("uid", "")).strip_edges()
@@ -1845,7 +1869,14 @@ func _tool_get_resource_uid_info(params: Dictionary) -> Dictionary:
 			return {"error": "Invalid path: " + validation["error"]}
 		resource_path = validation["sanitized"]
 		if uid_text.is_empty():
-			var mapped_uid: String = ResourceUID.path_to_uid(resource_path)
+			var mapped_uid:String
+			var uid_int: int = ResourceLoader.get_resource_uid(resource_path)
+			if uid_int != -1:
+				mapped_uid = ResourceUID.id_to_text(uid_int)
+			else:
+				# Handle case where path has no associated UID
+				push_error("No UID found for resource: ", resource_path)
+			#var mapped_uid: String = ResourceUID.path_to_uid(resource_path)
 			if mapped_uid.begins_with("uid://"):
 				uid_text = mapped_uid
 
@@ -1854,15 +1885,15 @@ func _tool_get_resource_uid_info(params: Dictionary) -> Dictionary:
 
 	var resolved_path: String = ""
 	if not uid_text.is_empty():
-		resolved_path = ResourceUID.uid_to_path(uid_text)
+		resolved_path = uid_to_path(uid_text)
 		if resource_path.is_empty():
 			resource_path = resolved_path
 
 	if not resource_path.is_empty() and uid_text.is_empty():
-		var remapped_uid: String = ResourceUID.path_to_uid(resource_path)
+		var remapped_uid: String = path_to_uid(resource_path)
 		if remapped_uid.begins_with("uid://"):
 			uid_text = remapped_uid
-			resolved_path = ResourceUID.uid_to_path(uid_text)
+			resolved_path = uid_to_path(uid_text)
 
 	var effective_path: String = resource_path if not resource_path.is_empty() else resolved_path
 	var exists: bool = not effective_path.is_empty() and FileAccess.file_exists(effective_path)
@@ -1933,7 +1964,7 @@ func _tool_fix_resource_uid(params: Dictionary) -> Dictionary:
 	if not FileAccess.file_exists(resource_path):
 		return {"error": "File not found: " + resource_path}
 
-	var previous_uid: String = ResourceUID.path_to_uid(resource_path)
+	var previous_uid: String = path_to_uid(resource_path)
 	if not previous_uid.begins_with("uid://"):
 		previous_uid = ""
 
@@ -1941,7 +1972,18 @@ func _tool_fix_resource_uid(params: Dictionary) -> Dictionary:
 	if uid_id == ResourceUID.INVALID_ID:
 		return {"error": "Failed to generate resource UID for: " + resource_path}
 
-	var set_error: Error = ResourceSaver.set_uid(resource_path, uid_id)
+	#var set_error: Error = ResourceSaver.set_uid(resource_path, uid_id)
+	var set_error: Error = OK
+
+	if ResourceUID.has_id(uid_id):
+		ResourceUID.set_id(uid_id, resource_path)
+	else:
+		ResourceUID.add_id(uid_id, resource_path)
+	
+	if ResourceUID.get_id_path(uid_id) != resource_path:
+		set_error = FAILED
+		
+
 	if set_error != OK:
 		return {"error": "Failed to persist resource UID: " + error_string(set_error)}
 
@@ -1951,7 +1993,7 @@ func _tool_fix_resource_uid(params: Dictionary) -> Dictionary:
 		if fs:
 			fs.update_file(resource_path)
 
-	var uid_text: String = ResourceUID.path_to_uid(resource_path)
+	var uid_text: String = path_to_uid(resource_path)
 	return {
 		"status": "success",
 		"resource_path": resource_path,
@@ -2219,7 +2261,7 @@ func _parse_resource_dependencies(resource_path: String) -> Array:
 			entry["fallback_path"] = raw_text.get_slice("::", 2)
 			var resolved_path: String = ""
 			if str(entry["uid"]).begins_with("uid://"):
-				resolved_path = ResourceUID.uid_to_path(str(entry["uid"]))
+				resolved_path = uid_to_path(str(entry["uid"]))
 			if resolved_path.is_empty():
 				resolved_path = str(entry["fallback_path"])
 			entry["resolved_path"] = resolved_path

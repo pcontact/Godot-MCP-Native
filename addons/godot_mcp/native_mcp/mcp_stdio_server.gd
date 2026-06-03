@@ -92,7 +92,7 @@ func _stdin_listen_loop() -> void:
 	
 	while _active:
 		# 从 stdin 读取数据
-		var input: String = OS.read_string_from_stdin()
+		var input: String = OS.read_string_from_stdin(1024)
 		
 		if not input.is_empty():
 			# 解析消息
