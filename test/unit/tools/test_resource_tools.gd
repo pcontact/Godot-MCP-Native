@@ -132,6 +132,6 @@ func test_get_godot_version():
 	assert_true(version["major"] >= 4, "Godot major version should be >= 4")
 
 func test_register_resources():
-	var server_core: RefCounted = load("res://addons/godot_mcp/native_mcp/mcp_server_core.gd").new()
-	_resource_tools.register_resources(server_core)
-	assert_eq(server_core.get_resources_count(), 7, "Should register 7 resources")
+	var registry: RefCounted = load("res://addons/godot_mcp/native_mcp/mcp_server_core.gd").new()
+	_resource_tools.register_resources(registry)
+	assert_eq(registry.get_resources_count(), 7, "Should register 7 resources")

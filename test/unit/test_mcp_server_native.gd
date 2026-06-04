@@ -19,20 +19,21 @@ func test_plugin_has_exit_tree():
 	var method_names: Array = methods.map(func(m): return m["name"])
 	assert_true(method_names.has("_exit_tree"), "Should have _exit_tree method")
 
-func test_plugin_has_start_server():
+func test_plugin_does_not_have_start_server():
 	var methods: Array = _plugin_script.get_script_method_list()
 	var method_names: Array = methods.map(func(m): return m["name"])
-	assert_true(method_names.has("start_server"), "Should have start_server method")
+	assert_false(method_names.has("start_server"), "Server start API should be removed")
 
-func test_plugin_has_stop_server():
+func test_plugin_does_not_have_stop_server():
 	var methods: Array = _plugin_script.get_script_method_list()
 	var method_names: Array = methods.map(func(m): return m["name"])
-	assert_true(method_names.has("stop_server"), "Should have stop_server method")
+	assert_false(method_names.has("stop_server"), "Server stop API should be removed")
 
-func test_plugin_has_get_server_status():
+func test_plugin_has_get_agent_status():
 	var methods: Array = _plugin_script.get_script_method_list()
 	var method_names: Array = methods.map(func(m): return m["name"])
-	assert_true(method_names.has("get_server_status"), "Should have get_server_status method")
+	assert_true(method_names.has("get_agent_status"), "Should have get_agent_status method")
+	assert_true(method_names.has("get_tool_registry"), "Should expose direct tool registry")
 
 func test_find_files_recursive():
 	var result: Array = []
@@ -87,10 +88,10 @@ func test_plugin_name():
 func test_export_variables():
 	var script_props: Array = _plugin_script.get_script_property_list()
 	var prop_names: Array = script_props.map(func(p): return p["name"])
-	assert_true(prop_names.has("auto_start"), "Should have auto_start export")
-	assert_true(prop_names.has("transport_mode"), "Should have transport_mode export")
-	assert_true(prop_names.has("http_port"), "Should have http_port export")
-	assert_true(prop_names.has("auth_enabled"), "Should have auth_enabled export")
+	assert_false(prop_names.has("auto_start"), "Should not have auto_start export")
+	assert_false(prop_names.has("transport_mode"), "Should not have transport_mode export")
+	assert_false(prop_names.has("http_port"), "Should not have http_port export")
+	assert_false(prop_names.has("auth_enabled"), "Should not have auth_enabled export")
 	assert_true(prop_names.has("log_level"), "Should have log_level export")
 	assert_true(prop_names.has("vibe_coding_mode"), "Should have vibe_coding_mode export")
 
@@ -98,11 +99,9 @@ func test_has_load_tool_states_in_enter_tree():
 	var methods: Array = _plugin_script.get_script_method_list()
 	var method_names: Array = methods.map(func(m): return m["name"])
 	assert_true(method_names.has("_enter_tree"), "Should have _enter_tree method")
-	# Verify load_tool_states is called before UI creation (test _enter_tree calls it)
 	var source_code: String = _plugin_script.source_code
 	assert_true(source_code.contains("load_tool_states"), "_enter_tree should call load_tool_states")
 	assert_true(source_code.contains("_create_main_screen_panel"), "Should still create main screen panel")
-	# Verify correct ordering: load_tool_states before _create_main_screen_panel
 	var load_pos: int = source_code.find("load_tool_states")
 	var panel_pos: int = source_code.find("_create_main_screen_panel")
 	assert_true(load_pos >= 0, "load_tool_states should exist in source")
@@ -120,9 +119,7 @@ func test_autoload_registered_in_enter_tree():
 	var method_names: Array = methods.map(func(m): return m["name"])
 	assert_true(method_names.has("_enter_tree"), "Should have _enter_tree method")
 	var source_code: String = _plugin_script.source_code
-	# Verify _ensure_runtime_probe_autoload is called in _enter_tree
 	assert_true(source_code.contains("_ensure_runtime_probe_autoload"), "_enter_tree should call _ensure_runtime_probe_autoload")
-	# Verify correct ordering: _register_all_tools -> _ensure_runtime_probe_autoload -> _create_main_screen_panel
 	var register_pos: int = source_code.find("_register_all_tools")
 	var autoload_pos: int = source_code.find("_ensure_runtime_probe_autoload")
 	var panel_pos: int = source_code.find("_create_main_screen_panel")

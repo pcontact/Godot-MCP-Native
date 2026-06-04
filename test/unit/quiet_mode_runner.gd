@@ -37,11 +37,11 @@ func _assert_not_quiet_block(result: Dictionary, tool_name: String) -> void:
 	_assert_false(bool(result.get("blocked", false)), tool_name + " override should bypass quiet-mode block")
 	_assert_false(str(result.get("reason", "")) == "vibe_coding_mode", tool_name + " override should not report vibe_coding_mode")
 
-func _assert_tool_schema_has_property(server_core: MCPServerCore, tool_name: String, property_name: String) -> void:
+func _assert_tool_schema_has_property(server_core: AgentToolRegistry, tool_name: String, property_name: String) -> void:
 	_assert_true(server_core.has_tool(tool_name), tool_name + " should be registered")
 	if not server_core.has_tool(tool_name):
 		return
-	var tool: MCPTypes.MCPTool = server_core.get_tool(tool_name)
+	var tool: AgentTypes.AgentTool = server_core.get_tool(tool_name)
 	var input_schema: Dictionary = tool.input_schema
 	var properties: Dictionary = input_schema.get("properties", {})
 	_assert_true(properties.has(property_name), tool_name + " schema should expose " + property_name)
@@ -79,28 +79,28 @@ func _test_overrides_bypass_quiet_mode_gate() -> void:
 	_assert_not_quiet_block(scene_tools._tool_close_scene_tab({"allow_ui_focus": true}), "close_scene_tab")
 
 func _test_disruptive_tool_schemas_expose_overrides() -> void:
-	var editor_capture: MCPServerCore = MCPServerCore.new()
+	var editor_capture: AgentToolRegistry = AgentToolRegistry.new()
 	var editor_tools: RefCounted = load("res://addons/godot_mcp/tools/editor_tools_native.gd").new()
 	editor_tools._register_get_editor_state(editor_capture)
 	editor_tools._register_run_project(editor_capture)
 	editor_tools._register_stop_project(editor_capture)
 	editor_tools._register_select_node(editor_capture)
 	editor_tools._register_select_file(editor_capture)
-	var editor_state_tool: MCPTypes.MCPTool = editor_capture.get_tool("get_editor_state")
+	var editor_state_tool: AgentTypes.AgentTool = editor_capture.get_tool("get_editor_state")
 	_assert_false(editor_state_tool.input_schema.get("properties", {}).has("allow_window"), "get_editor_state should remain read-only and not expose allow_window")
 	_assert_tool_schema_has_property(editor_capture, "run_project", "allow_window")
 	_assert_tool_schema_has_property(editor_capture, "stop_project", "allow_window")
 	_assert_tool_schema_has_property(editor_capture, "select_node", "allow_ui_focus")
 	_assert_tool_schema_has_property(editor_capture, "select_file", "allow_ui_focus")
 
-	var scene_capture: MCPServerCore = MCPServerCore.new()
+	var scene_capture: AgentToolRegistry = AgentToolRegistry.new()
 	var scene_tools: RefCounted = load("res://addons/godot_mcp/tools/scene_tools_native.gd").new()
 	scene_tools._register_open_scene(scene_capture)
 	scene_tools._register_close_scene_tab(scene_capture)
 	_assert_tool_schema_has_property(scene_capture, "open_scene", "allow_ui_focus")
 	_assert_tool_schema_has_property(scene_capture, "close_scene_tab", "allow_ui_focus")
 
-	var script_capture: MCPServerCore = MCPServerCore.new()
+	var script_capture: AgentToolRegistry = AgentToolRegistry.new()
 	var script_tools: RefCounted = load("res://addons/godot_mcp/tools/script_tools_native.gd").new()
 	script_tools._register_open_script_at_line(script_capture)
 	_assert_tool_schema_has_property(script_capture, "open_script_at_line", "allow_ui_focus")

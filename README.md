@@ -1,4 +1,4 @@
-# Godot MCP Native (Model Context Protocol)
+# Godot Agent Tools
 
 [中文版本](README.zh.md)
 
@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Version](https://img.shields.io/badge/Version-1.0.6-orange)
 
-A powerful Godot Engine plugin that integrates AI assistants (Claude, etc.) via the Model Context Protocol (MCP). Enable AI to directly read and modify your Godot projects - scenes, scripts, nodes, and resources - all through natural language.
+A Godot Engine plugin that exposes editor tools to AI coding agents running inside the editor. Agents can directly read and modify scenes, scripts, nodes, resources, and runtime state through an internal API.
 
 ## 🚀 Features
 
@@ -26,7 +26,7 @@ A powerful Godot Engine plugin that integrates AI assistants (Claude, etc.) via 
 ### Method 1: Asset Library (Recommended)
 1. Open your Godot project
 2. Go to **AssetLib** tab in the editor
-3. Search for "Godot MCP Native"
+3. Search for "Godot Agent Tools"
 4. Click **Download** and then **Install**
 
 ### Method 2: Manual Installation
@@ -34,138 +34,45 @@ A powerful Godot Engine plugin that integrates AI assistants (Claude, etc.) via 
 2. Copy the `addons/godot_mcp` folder to your project's `addons/` directory
 3. Open your project in Godot
 4. Go to **Project > Project Settings > Plugins**
-5. Enable "Godot MCP Native" plugin
+5. Enable "Godot Agent Tools" plugin
 
 ## 🔧 Usage
 
 ### Enabling the Plugin
 1. Open **Project > Project Settings > Plugins**
-2. Locate "Godot MCP Native" in the list
+2. Locate "Godot Agent Tools" in the list
 3. Set the status to **Enable**
 
-### Configuring MCP Server
-The plugin provides two transport modes:
+### Direct Agent API
+This release removes the external MCP transport layer entirely. The addon no longer starts an MCP, HTTP, stdio, or JSON-RPC server. Instead, an AI coding agent running inside the Godot editor calls registered tools directly through the plugin registry.
 
-#### HTTP Mode (for remote access)
-- Best for: Network-based AI integration
-- Configuration: Set `transport_mode = "http"` and configure `http_port` (default: 9080)
-- Optional: Enable `auth_enabled` and set `auth_token` for security
-
-### Connecting with Claude Desktop
-
-First, install the `mcp-remote` package:
-```bash
-npm install mcp-remote
+```gdscript
+var plugin = Engine.get_meta("GodotAgentToolsPlugin")
+var registry = plugin.get_tool_registry()
+var tools = registry.list_tools(true)
+var result = await registry.call_tool("get_project_info", {})
 ```
 
-#### HTTP Mode Configuration
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "http://localhost:19080/mcp"
-      ]
-    }
-  }
-}
-```
-
-### Connecting with Cursor / Trae
-
-#### HTTP Mode Configuration
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "url": "http://localhost:9080/mcp"
-    }
-  }
-}
-```
-
-With authentication:
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "url": "http://localhost:9080/mcp",
-      "headers": {
-        "Authorization": "Bearer your-secret-token-here"
-      }
-    }
-  }
-}
-```
-
-### Connecting with Cline
-
-#### HTTP Mode Configuration
-
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "url": "http://localhost:9080/mcp",
-      "type": "streamableHttp",
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
-
-### Connecting with OpenCode
-
-#### HTTP Mode Configuration
-
-```json
-{
-  "mcp": {
-    "godot-mcp": {
-      "type": "remote",
-      "url": "http://localhost:9080/mcp"
-    }
-  }
-}
-```
-
-### Connecting with Codex
-
-#### HTTP Mode Configuration
-
-```toml
-[mcp_servers]
-
-[mcp_servers.godot-mcp]
-type = "streamableHttp"
-url = "http://localhost:19080/mcp"
-```
+Use `list_tools(true)` to inspect enabled and disabled tools, `set_tool_enabled()` or `set_group_enabled()` to manage availability, and `call_tool()` to receive the raw Dictionary returned by the tool implementation.
 
 ## 💬 Example Prompts
 
-Once connected, you can interact with your Godot project through Claude:
+Example prompts for an internal AI coding agent:
 
 ```
-@mcp godot-mcp read godot://script/current
-
-I need help optimizing my player movement code. Can you suggest improvements?
-```
-
-```
-@mcp godot-mcp get-scene-tree
-
-Add a cube in the middle of the scene and create a camera that looks at it.
+Read the current script and suggest improvements for player movement.
 ```
 
 ```
-Create a main menu with Play, Options, and Quit buttons
+Inspect the current scene tree and add a cube at the center with a camera pointing at it.
 ```
 
 ```
-Implement a day/night cycle system with dynamic lighting
+Create a main menu with Play, Options, and Quit buttons.
+```
+
+```
+Implement a day/night cycle system with dynamic lighting.
 ```
 
 ## 📚 Available Commands
@@ -344,10 +251,9 @@ Implement a day/night cycle system with dynamic lighting
 
 ## 🔒 Security Recommendations
 
-- ✅ **Production**: Always enable authentication (`auth_enabled = true`)
-- ✅ **Token**: Use a strong token (≥16 characters with letters, numbers, special characters)
-- ✅ **Storage**: Don't commit tokens to version control
-- ⚠️ **Remote Access**: Use HTTPS (TLS/SSL) for network access
+- The direct registry is intended for in-editor agent code, not external network clients.
+- Keep destructive supplementary tools disabled unless the active workflow needs them.
+- Review tool results before applying broad project edits or export operations.
 
 ## 📋 Requirements
 
@@ -377,7 +283,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Godot Engine team for the amazing game engine
-- Model Context Protocol (MCP) specification
+- Godot EditorPlugin and tool scripting APIs
 - Claude AI by Anthropic for inspiring this integration
 
 ---

@@ -1,4 +1,4 @@
-# Godot MCP Native (模型上下文协议)
+# Godot Agent Tools
 
 [English Version](README.md)
 
@@ -6,7 +6,7 @@
 ![许可证](https://img.shields.io/badge/License-MIT-green)
 ![版本](https://img.shields.io/badge/Version-1.0.6-orange)
 
-一个强大的 Godot 引擎插件，通过模型上下文协议 (MCP) 集成 AI 助手（如 Claude 等）。让 AI 可以直接通过自然语言读取和修改您的 Godot 项目——场景、脚本、节点和资源。
+一个 Godot 引擎插件，为在编辑器内部运行的 AI 编码代理暴露编辑器工具。代理可以通过内部 API 直接读取和修改场景、脚本、节点、资源和运行时状态。
 
 ## 🚀 功能特性
 
@@ -26,7 +26,7 @@
 ### 方法 1：资源库（推荐）
 1. 打开您的 Godot 项目
 2. 进入编辑器中的 **AssetLib** 标签页
-3. 搜索 "Godot MCP Native"
+3. 搜索 "Godot Agent Tools"
 4. 点击 **下载** 然后 **安装**
 
 ### 方法 2：手动安装
@@ -34,140 +34,45 @@
 2. 将 `addons/godot_mcp` 文件夹复制到项目的 `addons/` 目录
 3. 在 Godot 中打开项目
 4. 进入 **项目 > 项目设置 > 插件**
-5. 启用 "Godot MCP Native" 插件
+5. 启用 "Godot Agent Tools" 插件
 
 ## 🔧 使用
 
 ### 启用插件
 1. 打开 **项目 > 项目设置 > 插件**
-2. 在列表中找到 "Godot MCP Native"
+2. 在列表中找到 "Godot Agent Tools"
 3. 将状态设置为 **启用**
 
-### 配置 MCP 服务器
-插件提供两种传输模式：
+### 直接代理 API
+此版本已彻底移除外部 MCP 传输层。插件不再启动 MCP、HTTP、stdio 或 JSON-RPC 服务器。在 Godot 编辑器内部运行的 AI 编码代理可以通过插件注册表直接调用工具。
 
-#### HTTP 模式（用于远程访问）
-- 适用场景：基于网络的 AI 集成
-- 配置：在插件设置中设置 `transport_mode = "http"` 并配置 `http_port`（默认：9080）
-- 可选：启用 `auth_enabled` 并设置 `auth_token` 以保障安全
-
-### 连接 Claude Desktop
-
-首先安装 `mcp-remote` 包：
-```bash
-npm install mcp-remote
+```gdscript
+var plugin = Engine.get_meta("GodotAgentToolsPlugin")
+var registry = plugin.get_tool_registry()
+var tools = registry.list_tools(true)
+var result = await registry.call_tool("get_project_info", {})
 ```
 
-#### HTTP 模式配置
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "http://localhost:19080/mcp"
-      ]
-    }
-  }
-}
-```
-
-### 连接 Cursor / Trae
-
-#### HTTP 模式配置
-
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "url": "http://localhost:9080/mcp"
-    }
-  }
-}
-```
-
-带身份验证：
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "url": "http://localhost:9080/mcp",
-      "headers": {
-        "Authorization": "Bearer your-secret-token-here"
-      }
-    }
-  }
-}
-```
-
-### 连接 Cline
-
-#### HTTP 模式配置
-编辑 Cline 配置文件（`cline_mcp_settings.json`）：
-
-```json
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "url": "http://localhost:9080/mcp",
-      "type": "streamableHttp",
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
-
-### 连接 OpenCode
-
-#### HTTP 模式配置
-
-```json
-{
-  "mcp": {
-    "godot-mcp": {
-      "type": "remote",
-      "url": "http://localhost:9080/mcp"
-    }
-  }
-}
-```
-
-### 连接 Codex
-
-#### HTTP 模式配置
-
-```toml
-[mcp_servers]
-
-[mcp_servers.godot-mcp]
-type = "streamableHttp"
-url = "http://localhost:19080/mcp"
-```
+使用 `list_tools(true)` 查看启用和禁用的工具，使用 `set_tool_enabled()` 或 `set_group_enabled()` 管理可用性，使用 `call_tool()` 获取工具实现返回的原始 Dictionary。
 
 ## 💬 示例提示
 
-连接后，您可以通过 Claude 与 Godot 项目交互：
+以下是面向内部 AI 编码代理的示例提示：
 
 ```
-@mcp godot-mcp read godot://script/current
-
-我需要帮助优化我的玩家移动代码。能提出改进建议吗？
-```
-
-```
-@mcp godot-mcp get-scene-tree
-
-在场景中间添加一个立方体，并创建一个相机看向它。
+读取当前脚本并提出玩家移动优化建议。
 ```
 
 ```
-创建一个主菜单，包含开始、选项和退出按钮
+检查当前场景树，并在中心添加一个立方体，创建一个指向它的相机。
 ```
 
 ```
-实现一个带有动态光照的昼夜循环系统
+创建一个主菜单，包含开始、选项和退出按钮。
+```
+
+```
+实现一个带有动态光照的昼夜循环系统。
 ```
 
 ## 📚 可用命令
@@ -346,10 +251,9 @@ url = "http://localhost:19080/mcp"
 
 ## 🔒 安全建议
 
-- ✅ **生产环境**：始终启用身份验证（`auth_enabled = true`）
-- ✅ **令牌**：使用强令牌（≥16 个字符，包含字母、数字、特殊字符）
-- ✅ **存储**：不要将令牌提交到版本控制
-- ⚠️ **远程访问**：使用 HTTPS（TLS/SSL）进行网络访问
+- 直接注册表面向编辑器内部代理代码，不面向外部网络客户端。
+- 除非当前工作流需要，否则保持破坏性补充工具禁用。
+- 执行大范围项目编辑或导出操作前，请检查工具返回结果。
 
 ## 📋 要求
 
@@ -379,7 +283,7 @@ url = "http://localhost:19080/mcp"
 ## 🙏 致谢
 
 - Godot 引擎团队带来的出色游戏引擎
-- 模型上下文协议 (MCP) 规范
+- Godot EditorPlugin 与工具脚本 API
 - Anthropic 的 Claude AI 启发了此集成
 
 ---

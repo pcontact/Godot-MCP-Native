@@ -110,9 +110,9 @@ func test_performance_metrics_types():
 	assert_gt(objects, 0, "Object count should be positive")
 
 func test_log_level_ordering():
-	assert_lt(MCPTypes.LogLevel.ERROR, MCPTypes.LogLevel.WARN, "ERROR < WARN")
-	assert_lt(MCPTypes.LogLevel.WARN, MCPTypes.LogLevel.INFO, "WARN < INFO")
-	assert_lt(MCPTypes.LogLevel.INFO, MCPTypes.LogLevel.DEBUG, "INFO < DEBUG")
+	assert_lt(AgentTypes.LogLevel.ERROR, AgentTypes.LogLevel.WARN, "ERROR < WARN")
+	assert_lt(AgentTypes.LogLevel.WARN, AgentTypes.LogLevel.INFO, "WARN < INFO")
+	assert_lt(AgentTypes.LogLevel.INFO, AgentTypes.LogLevel.DEBUG, "INFO < DEBUG")
 
 func test_mutex_thread_safety():
 	var mutex: Mutex = Mutex.new()

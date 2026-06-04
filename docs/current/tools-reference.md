@@ -1,6 +1,6 @@
 # 工具参考手册
 
-本手册详细说明 Godot MCP Native 项目的所有 MCP 工具，包括参数、返回值和使用示例。
+本手册详细说明 Godot Agent Tools 的内部代理工具，包括参数、返回值和使用示例。
 
 ## 目录
 
@@ -18,7 +18,7 @@
 
 ## 工具概述
 
-Godot MCP Native 实现了 **154 个工具**，分为 6 大类（含核心和补充工具）：
+Godot Agent Tools 实现了 **154 个工具**，分为 6 大类（含核心和补充工具）：
 
 | 类别 | 核心工具 | 补充工具 | 总计 | 源文件 | 用途 |
 |------|----------|----------|------|--------|------|
@@ -31,70 +31,42 @@ Godot MCP Native 实现了 **154 个工具**，分为 6 大类（含核心和补
 
 ### Vibe Coding / 免打扰模式
 
-`vibe_coding_mode` 默认启用。该模式不会关闭 MCP 服务，但会阻止会抢占真人用户编辑器上下文的操作。
+`vibe_coding_mode` 默认启用。该模式不会关闭工具注册表，但会阻止会抢占真人用户编辑器上下文的操作。
 
 - 会切换场景、选择节点/文件或聚焦脚本编辑器的工具，需要本次调用传入 `allow_ui_focus=true`。
 - 会打开或控制运行窗口的工具，需要本次调用传入 `allow_window=true`。
-- 需要人工调试配合 MCP 时，可以在 MCP 面板关闭 `Vibe Coding / 免打扰模式`。
+- 需要人工调试配合代理时，可以在 Agent Tools 面板关闭 `Vibe Coding / 免打扰模式`。
 
 ### 工具调用格式
 
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "tools/call",
-  "params": {
-    "name": "<tool_name>",
-    "arguments": {
-      "<param1>": "<value1>",
-      "<param2>": "<value2>"
-    }
-  },
-  "id": 1
-}
+```gdscript
+var plugin = Engine.get_meta("GodotAgentToolsPlugin")
+var registry = plugin.get_tool_registry()
+var result: Dictionary = await registry.call_tool("<tool_name>", {
+	"<param1>": "<value1>",
+	"<param2>": "<value2>"
+})
 ```
 
 ### 通用响应格式
 
 **成功响应**：
-```json
+```gdscript
 {
-  "jsonrpc": "2.0",
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "{...}"
-      }
-    ],
-    "structuredContent": { }
-  },
-  "id": 1
+	"status": "ok"
 }
 ```
 
-**错误响应**（通过 `structuredContent` 中的 `error` 字段标识）：
-```json
+**错误响应**：
+```gdscript
 {
-  "jsonrpc": "2.0",
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "{\"error\": \"Error description\"}"
-      }
-    ],
-    "structuredContent": {
-      "error": "Error description"
-    }
-  },
-  "id": 1
+	"error": "Error description"
 }
 ```
 
 ### 工具注解 (Annotations)
 
-每个工具都包含 MCP 标准注解，帮助客户端理解工具的行为：
+每个工具都包含行为注解，帮助内部代理理解工具的行为：
 
 | 注解 | 含义 |
 |------|------|
@@ -3970,10 +3942,10 @@ Continue：恢复执行。
 
 ## 总结
 
-本手册详细说明了 Godot MCP Native 项目的所有核心工具及部分补充工具。项目共 **154 个工具**（30 核心 + 124 补充），所有工具均可通过 MCP 工具管理面板按分组动态启用/禁用。补充工具（`*-Advanced` 分组）默认不启用，需在工具管理面板中手动开启。
+本手册详细说明了 Godot Agent Tools 项目的所有核心工具及部分补充工具。项目共 **154 个工具**（30 核心 + 124 补充），所有工具均可通过 Agent Tools 工具管理面板按分组动态启用/禁用。补充工具（`*-Advanced` 分组）默认不启用，需在工具管理面板中手动开启。
 
 **提示**：
-- 使用 `tools/list` 方法获取所有工具的实时列表和完整 JSON Schema
+- 使用 `registry.list_tools(true)` 获取所有工具的实时列表和完整 Schema
 - 关注每个工具的注解（`readOnlyHint`、`destructiveHint` 等）来理解工具的行为
 - `update_node_property` 支持 Undo/Redo，可通过 `Ctrl+Z` 撤销
 - `duplicate_node` 可复制节点及其子节点，自动生成唯一名称

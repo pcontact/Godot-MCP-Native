@@ -3,12 +3,12 @@ extends "res://addons/gut/test.gd"
 func test_script_path_validation():
 	var valid_paths: Array = ["res://test.gd", "res://scripts/player.gd", "res://addons/my_addon/main.gd"]
 	for path in valid_paths:
-		assert_true(MCPTypes.is_path_safe(path), path + " should be safe")
+		assert_true(AgentTypes.is_path_safe(path), path + " should be safe")
 
 func test_script_path_traversal():
 	var unsafe_paths: Array = ["res://../secret.gd", "res://scripts/../../etc/passwd"]
 	for path in unsafe_paths:
-		assert_false(MCPTypes.is_path_safe(path), path + " should be unsafe")
+		assert_false(AgentTypes.is_path_safe(path), path + " should be unsafe")
 
 func test_script_extension_check():
 	var ext: String = "res://test.gd".get_extension()

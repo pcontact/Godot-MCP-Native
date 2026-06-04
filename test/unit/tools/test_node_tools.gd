@@ -1,7 +1,7 @@
 extends "res://addons/gut/test.gd"
 
 func test_create_node_schema():
-	var tool: MCPTypes.MCPTool = MCPTypes.MCPTool.new()
+	var tool: AgentTypes.AgentTool = AgentTypes.AgentTool.new()
 	tool.name = "create_node"
 	tool.description = "Create a new node"
 	tool.input_schema = {
@@ -16,7 +16,7 @@ func test_create_node_schema():
 	assert_true(tool.is_valid() or tool.name == "create_node", "create_node schema should be valid")
 
 func test_delete_node_schema():
-	var tool: MCPTypes.MCPTool = MCPTypes.MCPTool.new()
+	var tool: AgentTypes.AgentTool = AgentTypes.AgentTool.new()
 	tool.name = "delete_node"
 	tool.description = "Delete a node"
 	tool.input_schema = {
@@ -29,7 +29,7 @@ func test_delete_node_schema():
 	assert_eq(tool.name, "delete_node", "delete_node schema should exist")
 
 func test_update_node_property_schema():
-	var tool: MCPTypes.MCPTool = MCPTypes.MCPTool.new()
+	var tool: AgentTypes.AgentTool = AgentTypes.AgentTool.new()
 	tool.name = "update_node_property"
 	tool.description = "Update a node property"
 	tool.input_schema = {

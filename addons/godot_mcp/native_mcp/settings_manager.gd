@@ -1,21 +1,13 @@
-class_name MCPSettingsManager
+class_name AgentSettingsManager
 extends "res://addons/godot_mcp/native_mcp/config_manager.gd"
 
-const CONFIG_FILE_NAME: String = "mcp_settings.cfg"
+const CONFIG_FILE_NAME: String = "agent_settings.cfg"
+const LEGACY_CONFIG_FILE_NAME: String = "mcp_settings.cfg"
 const SECTION_SETTINGS: String = "settings"
 
 const DEFAULT_SETTINGS: Dictionary = {
-	"transport_mode": "http",
-	"http_port": 9080,
-	"auth_enabled": false,
-	"auth_token": "",
-	"sse_enabled": true,
-	"allow_remote": false,
-	"cors_origin": "*",
-	"auto_start": false,
 	"log_level": 2,
 	"security_level": 1,
-	"rate_limit": 100,
 	"language": "en"
 }
 
@@ -26,6 +18,11 @@ func _init() -> void:
 
 func load_settings() -> Dictionary:
 	var saved: Dictionary = load_config()
+	if saved.is_empty():
+		var original_name: String = config_file_name
+		config_file_name = LEGACY_CONFIG_FILE_NAME
+		saved = load_config()
+		config_file_name = original_name
 	var merged: Dictionary = DEFAULT_SETTINGS.duplicate(true)
 	for key in saved:
 		if merged.has(key):
@@ -33,4 +30,5 @@ func load_settings() -> Dictionary:
 	return merged
 
 func save_settings(settings: Dictionary) -> bool:
+	config_file_name = CONFIG_FILE_NAME
 	return save_config(settings)

@@ -44,8 +44,8 @@ func test_resource_extensions():
 	assert_has(extensions, ".gdshader", "Should include .gdshader")
 
 func test_resource_path_safety():
-	assert_true(MCPTypes.is_path_safe("res://icon.svg"), "res:// resource should be safe")
-	assert_false(MCPTypes.is_path_safe("C:\\Windows\\icon.png"), "Windows path should be unsafe")
+	assert_true(AgentTypes.is_path_safe("res://icon.svg"), "res:// resource should be safe")
+	assert_false(AgentTypes.is_path_safe("C:\\Windows\\icon.png"), "Windows path should be unsafe")
 
 func test_create_resource_types():
 	var valid_types: Array = ["Curve", "Gradient", "StyleBoxFlat", "Animation"]

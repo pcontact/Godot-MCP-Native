@@ -1,4 +1,4 @@
-class_name MCPToolClassifier
+class_name AgentToolClassifier
 extends RefCounted
 
 const CORE_MAX_COUNT: int = 30

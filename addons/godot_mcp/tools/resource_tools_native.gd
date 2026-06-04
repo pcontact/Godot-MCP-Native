@@ -271,7 +271,7 @@ static func _get_godot_version() -> Dictionary:
 # 资源注册
 # ===========================================
 
-## 注册所有资源到MCPServerCore
+## Register all resources into the direct agent tool registry.
 func register_resources(server_core: RefCounted) -> void:
 	if not server_core:
 		if _log_callback.is_valid():
