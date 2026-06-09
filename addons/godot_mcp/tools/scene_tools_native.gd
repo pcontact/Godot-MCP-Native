@@ -130,7 +130,7 @@ func _tool_create_scene(params: Dictionary) -> Dictionary:
 	if scene_path.is_empty():
 		return {"error": "Missing required parameter: scene_path"}
 	
-	# 使用PathValidator验证路径安全�?
+	# 使用PathValidator验证路径安全性
 	var validation: Dictionary = PathValidator.validate_file_path(scene_path, [".tscn"])
 	if not validation["valid"]:
 		return {"error": "Invalid path: " + validation["error"]}
@@ -142,15 +142,21 @@ func _tool_create_scene(params: Dictionary) -> Dictionary:
 	if not ClassDB.class_exists(root_node_type):
 		return {"error": "Invalid node type: " + root_node_type}
 	
-	# 创建根节�?
+	# --- Create parent directory if it doesn't exist ---
+	var dir_path: String = scene_path.get_base_dir()
+	var err_mkdir: Error = DirAccess.make_dir_recursive_absolute(dir_path)
+	if err_mkdir != OK:
+		return {"error": "Failed to create directory: " + error_string(err_mkdir)}
+	
+	# 创建根节点
 	var root_node: Node = ClassDB.instantiate(root_node_type)
 	root_node.name = scene_path.get_file().get_basename()
 	
 	# 创建PackedScene
 	var packed_scene: PackedScene = PackedScene.new()
 	
-	# 设置owner并打�?
-	root_node.owner = root_node  # 临时设置
+	# No need to set owner for the root node (owner = null is fine)
+	root_node.owner = null
 	packed_scene.pack(root_node)
 	
 	# 保存场景
@@ -167,7 +173,7 @@ func _tool_create_scene(params: Dictionary) -> Dictionary:
 		"scene_path": scene_path,
 		"root_node_type": root_node_type
 	}
-
+	
 # ============================================================================
 # save_scene - 保存当前场景
 # ============================================================================

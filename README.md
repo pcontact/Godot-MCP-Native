@@ -38,6 +38,10 @@ A powerful Godot Engine plugin that integrates AI assistants (Claude, etc.) via 
 
 ## 🔧 Usage
 
+### AI Assistant Instruction
+
+To ensure AI coding assistants follow this project's conventions and available tools, copy the contents of `.godot-mcp-instructions.md` into your assistant's instruction (system prompt). This helps the assistant align with repo rules, coding style, and MCP tool usage before it reads or edits the project.
+
 ### Enabling the Plugin
 1. Open **Project > Project Settings > Plugins**
 2. Locate "Godot MCP Native" in the list
