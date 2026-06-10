@@ -1349,6 +1349,17 @@ func _tool_create_script(params: Dictionary) -> Dictionary:
 	if FileAccess.file_exists(script_path):
 		return {"error": "File already exists: " + script_path}
 
+	var dir_path: String = script_path.get_base_dir()
+	if not dir_path.is_empty():
+		var absolute_dir_path: String = ProjectSettings.globalize_path(dir_path)
+		if absolute_dir_path.is_empty():
+			return {"error": "Failed to resolve directory path: " + dir_path}
+
+		if not DirAccess.dir_exists_absolute(absolute_dir_path):
+			var err_mkdir: Error = DirAccess.make_dir_recursive_absolute(absolute_dir_path)
+			if err_mkdir != OK:
+				return {"error": "Failed to create directory: " + error_string(err_mkdir) + " (" + dir_path + ")"}
+
 	if content.is_empty():
 		content = _get_script_template(template)
 
